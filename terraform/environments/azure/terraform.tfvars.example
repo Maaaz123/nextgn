@@ -1,0 +1,15 @@
+# Copy to terraform.tfvars. Do not commit if it contains secrets.
+
+subscription_id = "your-azure-subscription-id"
+location        = "eastus"
+project_name    = "data-tools"
+vm_size         = "Standard_B2s"
+admin_username  = "azureuser"
+admin_ssh_public_key_path = "~/.ssh/id_rsa.pub"
+
+repo_url    = "https://github.com/yourorg/your-repo.git"
+repo_branch = "main"
+
+# allowed_cidr = "0.0.0.0/0"
+# postgres_password = "postgres"
+# airflow_password  = "admin"

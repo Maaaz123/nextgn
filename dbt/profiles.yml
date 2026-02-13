@@ -1,0 +1,23 @@
+# dbt profile – use env vars so Airflow/Docker can inject warehouse connection
+# In Airflow: set AIRFLOW_CONN_* or pass env to the task
+data_tools:
+  target: "dev"
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('WAREHOUSE_HOST', 'postgres') }}"
+      port: "{{ env_var('WAREHOUSE_PORT', '5432') | as_number }}"
+      user: "{{ env_var('WAREHOUSE_USER', 'postgres') }}"
+      password: "{{ env_var('WAREHOUSE_PASSWORD', 'postgres') }}"
+      dbname: "{{ env_var('WAREHOUSE_DB', 'warehouse') }}"
+      schema: "{{ env_var('DBT_SCHEMA', 'public') }}"
+      threads: 4
+    prod:
+      type: postgres
+      host: "{{ env_var('WAREHOUSE_HOST', 'postgres') }}"
+      port: "{{ env_var('WAREHOUSE_PORT', '5432') | as_number }}"
+      user: "{{ env_var('WAREHOUSE_USER', 'postgres') }}"
+      password: "{{ env_var('WAREHOUSE_PASSWORD', 'postgres') }}"
+      dbname: "{{ env_var('WAREHOUSE_DB', 'warehouse') }}"
+      schema: "{{ env_var('DBT_SCHEMA', 'public') }}"
+      threads: 4

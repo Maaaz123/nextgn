@@ -1,0 +1,41 @@
+version: 2
+sources:
+  - name: raw
+    description: Raw layer – data loaded by Airflow (MySQL → Postgres)
+    database: "{{ target.dbname }}"
+    schema: raw
+    # Optional: fail if raw data is stale (e.g. no load in 48h)
+    # freshness:
+    #   warn_after: {count: 24, period: hour}
+    #   error_after: {count: 48, period: hour}
+    # loaded_at_field: updated_at
+    tables:
+      - name: flows
+        description: Flow records from MySQL mimdbuat01.flows
+        columns:
+          - name: id
+            tests: [not_null]
+          - name: updated_at
+            tests: [not_null]
+      - name: plants
+        description: Plant records from MySQL mimdbuat01.plants
+        columns:
+          - name: id
+            tests: [not_null]
+          - name: updated_at
+            tests: [not_null]
+      - name: licenses
+        description: License records from MySQL mimdbuat01.licenses
+        columns:
+          - name: id
+            tests: [not_null]
+          - name: updated_at
+            tests: [not_null]
+      - name: example_events
+        description: Example event stream (optional seed data)
+        columns:
+          - name: id
+          - name: event_at
+          - name: user_id
+          - name: event_type
+          - name: payload

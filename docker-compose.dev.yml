@@ -1,0 +1,9 @@
+# Override for dev: keep defaults, optional port mapping
+# Use: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+services:
+  airflow-webserver:
+    ports:
+      - "8080:8080"
+  metabase:
+    ports:
+      - "3000:3000"

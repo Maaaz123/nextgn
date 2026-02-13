@@ -1,0 +1,5 @@
+# dbt for local CLI (use Python 3.8–3.12; 3.14 is not supported yet).
+# Create venv with supported Python: python3.11 -m venv .venv && source .venv/bin/activate
+# Then: pip install -r requirements-dbt.txt
+dbt-core>=1.7,<2
+dbt-postgres>=1.7,<2

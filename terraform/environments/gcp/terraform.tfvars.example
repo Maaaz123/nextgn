@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars. Do not commit if it contains secrets.
+
+project_id   = "your-gcp-project-id"
+region       = "us-central1"
+zone         = "us-central1-a"
+project_name = "data-tools"
+machine_type = "e2-medium"
+
+repo_url    = "https://github.com/yourorg/your-repo.git"
+repo_branch = "main"
+
+# allowed_cidr = "0.0.0.0/0"
+# postgres_password = "postgres"
+# airflow_password  = "admin"

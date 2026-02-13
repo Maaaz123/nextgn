@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars. Do not commit terraform.tfvars if it contains secrets.
+# Run from repo root: terraform -chdir=terraform/environments/docker apply
+
+# project_root = "/absolute/path/to/repo"
+postgres_user     = "postgres"
+postgres_password = "postgres"
+airflow_username  = "admin"
+airflow_password  = "admin"
+enable_mysql      = false
+# postgres_port  = 5432
+# airflow_port   = 8080
+# metabase_port  = 3000

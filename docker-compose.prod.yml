@@ -1,0 +1,12 @@
+# Override for production: restrict ports or use reverse proxy; use .env.prod on server
+# Use: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  airflow-webserver:
+    ports:
+      - "127.0.0.1:8080:8080"  # bind to localhost only; put nginx/traefik in front
+  metabase:
+    ports:
+      - "127.0.0.1:3000:3000"
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"

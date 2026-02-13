@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars. Do not commit if it contains secrets.
+# Required for auto clone+run: repo_url. Optional: repo_branch, passwords.
+
+aws_region   = "us-east-1"
+project_name = "data-tools"
+instance_type = "t3.medium"
+
+# Your Git repo (public or use SSH URL with deploy key on VM)
+repo_url    = "https://github.com/yourorg/your-repo.git"
+repo_branch = "main"
+
+# Path to your SSH public key (for EC2 login)
+ssh_public_key_path = "~/.ssh/id_rsa.pub"
+
+# Restrict access (e.g. "1.2.3.4/32" or "0.0.0.0/0" for anywhere)
+allowed_cidr = "0.0.0.0/0"
+
+# postgres_password = "postgres"
+# airflow_password  = "admin"

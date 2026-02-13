@@ -1,0 +1,20 @@
+# Airflow + dbt-core + dbt-postgres for orchestrated transformations
+FROM apache/airflow:2.8.2-python3.11
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+USER airflow
+RUN pip install --no-cache-dir \
+    "dbt-core>=1.7,<2" \
+    "dbt-postgres>=1.7,<2" \
+    psycopg2-binary \
+    apache-airflow-providers-mysql \
+    apache-airflow-providers-postgres \
+    PyMySQL
+
+ENV DBT_PROJECT_DIR=/opt/airflow/dbt
+WORKDIR ${DBT_PROJECT_DIR}

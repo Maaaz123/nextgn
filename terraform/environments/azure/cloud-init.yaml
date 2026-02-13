@@ -1,0 +1,19 @@
+#cloud-config
+package_update: true
+packages:
+  - docker.io
+  - docker-compose-plugin
+  - git
+
+runcmd:
+  - systemctl enable docker
+  - systemctl start docker
+  - |
+    if [ -n "${repo_url}" ]; then
+      git clone -b "${repo_branch}" "${repo_url}" /opt/app 2>/dev/null || true
+      if [ -d /opt/app ]; then
+        echo "POSTGRES_PASSWORD=${postgres_password}" > /opt/app/.env
+        echo "AIRFLOW_PASSWORD=${airflow_password}" >> /opt/app/.env
+        cd /opt/app && docker compose up -d || true
+      fi
+    fi

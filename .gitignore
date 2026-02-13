@@ -1,0 +1,24 @@
+.env
+*.log
+airflow/logs/
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+.idea/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+
+# Terraform (all environments)
+terraform/**/.terraform/
+terraform/**/.terraform.lock.hcl
+terraform/**/terraform.tfstate
+terraform/**/terraform.tfstate.backup
+terraform/**/*.tfvars
+!terraform/**/terraform.tfvars.example
+terraform/**/crash.log
+terraform/**/crash.*.log
+terraform/**/override.tf
+terraform/**/override.tf.json

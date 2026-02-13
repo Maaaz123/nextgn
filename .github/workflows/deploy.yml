@@ -1,0 +1,60 @@
+# CD: deploy data stack to dev / staging / prod
+# Uses GitHub Environments for approval and env-specific secrets
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+jobs:
+  deploy:
+    name: Deploy to ${{ env.ENV_NAME }}
+    runs-on: ubuntu-latest
+    env:
+      # On push to main → dev; on manual run → selected environment
+      ENV_NAME: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ env.ENV_NAME }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        id: deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH || '/opt/data-tools' }}"
+            ENV_NAME="${{ env.ENV_NAME }}"
+            cd "$DEPLOY_PATH"
+            git fetch origin
+            git reset --hard origin/main
+            COMPOSE_FILES="-f docker-compose.yml"
+            [ -f "docker-compose.${ENV_NAME}.yml" ] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.${ENV_NAME}.yml"
+            docker compose $COMPOSE_FILES pull --quiet 2>/dev/null || true
+            docker compose $COMPOSE_FILES build --no-cache airflow-webserver airflow-scheduler airflow-init 2>/dev/null || true
+            docker compose $COMPOSE_FILES up -d
+            echo "Deployed to $ENV_NAME"
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "Deployed to **${{ env.ENV_NAME }}**"
+          echo "- Airflow: http://${{ secrets.SSH_HOST }}:8080"
+          echo "- Metabase: http://${{ secrets.SSH_HOST }}:3000"
+          echo "- Postgres: ${{ secrets.SSH_HOST }}:5432"

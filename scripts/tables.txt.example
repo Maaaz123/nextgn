@@ -1,0 +1,6 @@
+# One table name per line. Use for:
+#   python scripts/generate_mysql_postgres_variable.py tables.txt --simple
+# Then set Airflow Variable mysql_to_postgres_table_list to the output.
+flows
+users
+orders

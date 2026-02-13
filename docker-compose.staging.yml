@@ -1,0 +1,9 @@
+# Override for staging: same as base; use .env.staging on server for credentials
+# Use: docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+services:
+  airflow-webserver:
+    ports:
+      - "8080:8080"
+  metabase:
+    ports:
+      - "3000:3000"

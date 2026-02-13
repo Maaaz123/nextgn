@@ -1,0 +1,134 @@
+version: 2
+models:
+  # ---- Bronze (dl) ----
+  - name: dl_flows
+    description: Bronze (dl) – data lake flows from raw
+    columns:
+      - name: id
+        description: Primary key
+        tests: [unique, not_null]
+      - name: created_at
+        tests: [not_null]
+      - name: updated_at
+        tests: [not_null]
+
+  - name: dl_plants
+    description: Bronze (dl) – data lake plants from raw
+    columns:
+      - name: id
+        description: Primary key
+        tests: [unique, not_null]
+      - name: created_at
+        tests: [not_null]
+      - name: updated_at
+        tests: [not_null]
+
+  - name: dl_licenses
+    description: Bronze (dl) – data lake licenses from raw
+    columns:
+      - name: id
+        description: Primary key
+        tests: [unique, not_null]
+      - name: created_at
+        tests: [not_null]
+      - name: updated_at
+        tests: [not_null]
+
+  # ---- Stg (transformations) ----
+  - name: stg_flows
+    description: Stg – transformation view, cleaned flows
+    columns:
+      - name: id
+        tests: [unique, not_null]
+      - name: created_at
+        tests: [not_null]
+      - name: created_date
+        tests: [not_null]
+
+  - name: stg_plants
+    description: Stg – transformation view, cleaned plants
+    columns:
+      - name: id
+        tests: [unique, not_null]
+      - name: created_at
+        tests: [not_null]
+      - name: created_date
+        tests: [not_null]
+
+  - name: stg_licenses
+    description: Stg – transformation view, cleaned licenses
+    columns:
+      - name: id
+        tests: [unique, not_null]
+      - name: created_at
+        tests: [not_null]
+      - name: created_date
+        tests: [not_null]
+
+  # ---- Silver (dw fact & dim) ----
+  - name: dw_fact_flows
+    description: Silver (dw) – fact table, flow events
+    columns:
+      - name: id
+        tests: [unique, not_null]
+      - name: created_date
+        tests: [not_null]
+
+  - name: dw_dim_plants
+    description: Silver (dw) – dimension table, plant entity
+    columns:
+      - name: id
+        tests: [unique, not_null]
+      - name: created_date
+        tests: [not_null]
+
+  - name: dw_dim_licenses
+    description: Silver (dw) – dimension table, license entity
+    columns:
+      - name: id
+        tests: [unique, not_null]
+      - name: created_date
+        tests: [not_null]
+
+  - name: dw_dim_date
+    description: Silver (dw) – dimension table, one row per date for time analytics
+    columns:
+      - name: date_key
+        description: Integer key YYYYMMDD
+        tests: [unique, not_null]
+      - name: date_date
+        description: Calendar date
+        tests: [unique, not_null]
+
+  # ---- Gold (dm) ----
+  - name: dm_flows_summary
+    description: Gold (dm) – business mart, flow counts
+    columns:
+      - name: workflow
+        tests: [not_null]
+      - name: state
+        tests: [not_null]
+      - name: created_date
+        tests: [not_null]
+      - name: flow_count
+        tests: [not_null]
+
+  - name: dm_licenses_summary
+    description: Gold (dm) – business mart, license counts
+    columns:
+      - name: license_type
+        tests: [not_null]
+      - name: created_date
+        tests: [not_null]
+      - name: license_count
+        tests: [not_null]
+
+  - name: dm_plants_summary
+    description: Gold (dm) – business mart, plant counts
+    columns:
+      - name: state
+        tests: [not_null]
+      - name: created_date
+        tests: [not_null]
+      - name: plant_count
+        tests: [not_null]

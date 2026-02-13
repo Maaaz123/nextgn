@@ -1,0 +1,2 @@
+# Install for running tests: pip install -r requirements-test.txt
+pytest>=7.0.0
