@@ -11,7 +11,7 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
-from airflow.operators.trigger_dag import TriggerDagRunOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 # Same env as dbt_dag for warehouse connection
 DBT_ENV = (

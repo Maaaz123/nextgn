@@ -247,8 +247,9 @@ def transfer_table(
                 )
                 cursor.execute(select_sql, (last_value,))
             else:
-                # Full load (first run or no incremental)
-                select_sql = f"SELECT * FROM `{mysql_table}` ORDER BY `{incremental_column or primary_key}`"
+                # Full load: ORDER BY primary_key to avoid MySQL "Out of sort memory"
+                # (sorting 150K+ rows by non-indexed column like updated_at blows sort buffer)
+                select_sql = f"SELECT * FROM `{mysql_table}` ORDER BY `{primary_key}`"
                 cursor.execute(select_sql)
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
@@ -341,9 +342,9 @@ def transfer_table(
 
             # Update state for incremental
             if incremental_column and row_count > 0:
-                # Max value of incremental column in this batch (last row due to ORDER BY)
                 inc_col_idx = columns.index(incremental_column)
-                max_val = rows[-1][inc_col_idx]
+                vals = [r[inc_col_idx] for r in rows if r[inc_col_idx] is not None]
+                max_val = max(vals) if vals else None
                 max_val_str = str(max_val) if max_val is not None else None
                 if max_val_str:
                     _set_last_value(pg_hook, mysql_schema, mysql_table, incremental_column, max_val_str)

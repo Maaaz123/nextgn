@@ -117,7 +117,24 @@ Save, then enable and trigger the **mysql_to_postgres** DAG.
 
 ---
 
-## Troubleshooting: no data in Postgres
+## Troubleshooting: no tables created, no data moved
+
+Follow these steps in order:
+
+| Step | Action | What to check |
+|------|--------|---------------|
+| 1 | **Test connections** | Airflow → trigger **test_connections** DAG. Both tasks must pass. If they fail, fix `mysql_source` and `postgres_warehouse` in Admin → Connections. |
+| 2 | **Postgres Schema (database)** | Admin → Connections → `postgres_warehouse` → **Schema** must be the database name: `warehouse` or `postgres`. Data goes to `raw` schema inside that DB. |
+| 3 | **Run verify script** | From project root: `./scripts/db/verify_postgres_raw.sh` – checks both `warehouse` and `postgres` databases. |
+| 4 | **Check DAG run** | mysql_to_postgres → open latest run → did tasks succeed or fail? Click a task → **Log** to see errors. |
+| 5 | **MySQL tables exist?** | On MySQL: `SELECT COUNT(*) FROM flows` (etc.). If empty or missing, fix source data first. |
+| 6 | **MySQL reachable from Docker?** | If Airflow runs in Docker, MySQL at `34.166.142.13` must accept connections from your machine. Firewall/security group must allow port 3306. |
+
+**Common fix:** Set `postgres_warehouse` **Schema** = `warehouse` (recommended; init-dbs creates raw there). Then trigger mysql_to_postgres again.
+
+---
+
+## Troubleshooting: no data in Postgres (detailed)
 
 1. **Check task logs**  
    In Airflow UI → **mysql_to_postgres** DAG → open a run → click a task (e.g. `mimdbuat01_flows_0`) → **Log**. Look for Python errors or connection errors.
