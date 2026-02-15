@@ -5,35 +5,44 @@ Canonical layout of the Data Tools repo. Use this as the single reference for wh
 ```
 data tools/
 ├── .github/workflows/
-│   ├── ci.yml              # CI: dbt compile/run/test, Airflow DAG check, YAML lint
+│   ├── ci.yml              # CI: dbt deps/parse, Airflow DAG check, YAML lint
 │   └── deploy.yml          # CD: deploy to dev/staging/prod via SSH
 │
 ├── airflow/
-│   ├── CONNECTIONS.md      # Airflow connections, variables, troubleshooting
+│   ├── CONNECTIONS.md      # Airflow connections, troubleshooting
 │   ├── dags/
-│   │   ├── data_pipeline_dag.py   # Full pipeline: ingest → dbt (bronze→silver→gold)
-│   │   ├── dbt_dag.py             # dbt deps / run / test only
-│   │   ├── mysql_to_postgres_dag.py  # MySQL → Postgres raw sync
-│   │   ├── test_connections_dag.py   # Test mysql_source & postgres_warehouse
+│   │   ├── data_pipeline_lakehouse_dag.py   # Lakehouse: dbt against Dremio
+│   │   ├── mysql_to_landing_dag.py          # MySQL → MinIO landing Parquet
+│   │   ├── test_connections_dag.py          # Test mysql_source & Dremio
 │   │   └── helpers/
-│   │       └── mysql_to_postgres.py  # Transfer logic (batching, state, incremental)
+│   │       └── mysql_to_landing.py          # Transfer logic (MySQL → Parquet)
 │   └── logs/               # Airflow logs (gitignored)
 │
 ├── dbt/
+│   ├── README.md           # dbt usage and layer overview
 │   ├── dbt_project.yml
-│   ├── profiles.yml        # Warehouse connection via env vars
+│   ├── profiles.yml        # Dremio connection via env vars
 │   ├── packages.yml
 │   ├── models/
-│   │   ├── sources.yml     # raw.flows, raw.plants, raw.licenses
-│   │   ├── schema.yml     # Tests (unique, not_null, etc.)
-│   │   ├── bronze/        # dl_* (data lake views on raw)
-│   │   ├── stg/           # stg_* (transformations)
-│   │   ├── silver/        # dw_fact_*, dw_dim_* (data warehouse)
-│   │   └── gold/          # dm_* (business marts)
-│   └── tests/             # Singular dbt tests (DQ)
+│   │   ├── README.md       # Model DAG
+│   │   ├── sources.yml     # landing.plants, landing.licenses
+│   │   ├── bronze/         # stg_* (staging from landing Parquet)
+│   │   │   ├── schema.yml
+│   │   │   ├── stg_plants.sql
+│   │   │   └── stg_licenses.sql
+│   │   ├── silver/         # dw_dim_* (data warehouse)
+│   │   │   ├── schema.yml
+│   │   │   ├── dw_dim_plant_profile.sql
+│   │   │   └── dw_dim_date.sql
+│   │   └── gold/           # dm_* (business marts)
+│   │       ├── schema.yml
+│   │       └── dm_plant.sql
+│   └── tests/              # Singular dbt tests (DQ)
 │
 ├── docs/
-│   └── PROJECT_STRUCTURE.md   # This file
+│   ├── PROJECT_STRUCTURE.md
+│   ├── LAKEHOUSE.md
+│   └── DEPLOYMENT.md
 │
 ├── terraform/                 # IaC: deploy on Docker, AWS, GCP, or Azure
 │   ├── README.md
@@ -45,24 +54,24 @@ data tools/
 │
 ├── scripts/
 │   ├── infra/
-│   │   └── init-dbs.sh    # Postgres: create warehouse, airflow, metabase DBs + raw schema
+│   │   └── init-dbs.sh    # Create airflow + metabase DBs (when using docker-compose.postgres.yml)
 │   ├── airflow/
-│   │   ├── test_dag.sh    # Validate DAGs load (list-import-errors)
+│   │   ├── test_dag.sh    # Validate DAGs load
 │   │   ├── test_connections.py
-│   │   └── generate_mysql_postgres_variable.py
-│   ├── db/
-│   │   └── verify_postgres_raw.sh   # List raw tables and row counts
+│   │   └── add_connections.sh
 │   └── dbt/
-│       └── run.sh                    # Run dbt via Docker (no local dbt install)
+│       ├── run.sh             # Run dbt via Airflow container (Dremio target)
+│       └── run_lakehouse.sh   # Run dbt from host (Dremio target)
 │
 ├── tests/
-│   └── test_mysql_to_postgres.py   # Pytest for mysql_to_postgres helper
+│   └── __init__.py
 │
-├── docker-compose.yml     # Postgres, Airflow, Metabase (optional MySQL)
+├── docker-compose.yml     # MinIO, Dremio, Airflow, MySQL, Metabase
 ├── docker-compose.dev.yml
 ├── docker-compose.staging.yml
 ├── docker-compose.prod.yml
-├── Dockerfile.airflow     # Airflow image + dbt-core, dbt-postgres
+├── docker-compose.postgres.yml   # Optional: Airflow metadata + Metabase on Postgres
+├── Dockerfile.airflow
 ├── .env.example
 ├── .gitignore
 └── README.md
@@ -73,10 +82,10 @@ data tools/
 | Goal | Location |
 |------|----------|
 | Add or edit DAGs | `airflow/dags/` |
-| Change MySQL→Postgres logic | `airflow/dags/helpers/mysql_to_postgres.py` |
-| Add dbt models (bronze/stg/silver/gold) | `dbt/models/` (correct layer folder) |
-| Add dbt tests | `dbt/models/schema.yml` or `dbt/tests/` |
-| Connection and variable setup | `airflow/CONNECTIONS.md` |
-| DB init (new DBs, raw schema) | `scripts/infra/init-dbs.sh` |
-| Deploy stack (any infra) | `docs/DEPLOYMENT.md`, `./scripts/deploy.sh`, `terraform/environments/{docker,aws,gcp,azure}` |
+| Change MySQL→Landing logic | `airflow/dags/helpers/mysql_to_landing.py` |
+| Add dbt models (bronze/silver/gold) | `dbt/models/` (correct layer folder) |
+| Add dbt tests | `dbt/models/*/schema.yml` or `dbt/tests/` |
+| Connection setup | `airflow/CONNECTIONS.md` |
+| DB init (when using Postgres overlay) | `scripts/infra/init-dbs.sh` |
+| Deploy stack | `docs/DEPLOYMENT.md`, `./scripts/deploy.sh`, `terraform/environments/` |
 | CI/CD | `.github/workflows/ci.yml`, `deploy.yml` |

@@ -1,23 +1,30 @@
-# dbt profile – use env vars so Airflow/Docker can inject warehouse connection
-# In Airflow: set AIRFLOW_CONN_* or pass env to the task
+# dbt profile – use env vars so Airflow/Docker can inject connection
+# Lakehouse: MinIO + Apache Iceberg + Dremio
 data_tools:
-  target: "dev"
+  target: "dremio_dev"
   outputs:
-    dev:
-      type: postgres
-      host: "{{ env_var('WAREHOUSE_HOST', 'postgres') }}"
-      port: "{{ env_var('WAREHOUSE_PORT', '5432') | as_number }}"
-      user: "{{ env_var('WAREHOUSE_USER', 'postgres') }}"
-      password: "{{ env_var('WAREHOUSE_PASSWORD', 'postgres') }}"
-      dbname: "{{ env_var('WAREHOUSE_DB', 'warehouse') }}"
-      schema: "{{ env_var('DBT_SCHEMA', 'public') }}"
+    # Raw tables are Iceberg in MinIO, queried via Dremio. Set DBT_TARGET=dremio_dev to use.
+    dremio_dev:
+      type: dremio
+      software_host: "{{ env_var('DREMIO_HOST', 'localhost') }}"
+      port: "{{ env_var('DREMIO_PORT', '9047') | as_number }}"
+      user: "{{ env_var('DREMIO_USER', 'admin') }}"
+      password: "{{ env_var('DREMIO_PASSWORD', 'Maaz123123123@f') }}"
+      object_storage_source: "{{ env_var('DREMIO_OBJECT_STORAGE_SOURCE', 'minio') }}"
+      object_storage_path: "{{ env_var('DREMIO_OBJECT_STORAGE_PATH', 'no_schema') }}"
+      dremio_space: "{{ env_var('DREMIO_SPACE', 'dbt') }}"
+      dremio_space_folder: "{{ env_var('DREMIO_SPACE_FOLDER', 'public') }}"
+      use_ssl: false
       threads: 4
-    prod:
-      type: postgres
-      host: "{{ env_var('WAREHOUSE_HOST', 'postgres') }}"
-      port: "{{ env_var('WAREHOUSE_PORT', '5432') | as_number }}"
-      user: "{{ env_var('WAREHOUSE_USER', 'postgres') }}"
-      password: "{{ env_var('WAREHOUSE_PASSWORD', 'postgres') }}"
-      dbname: "{{ env_var('WAREHOUSE_DB', 'warehouse') }}"
-      schema: "{{ env_var('DBT_SCHEMA', 'public') }}"
+    dremio_prod:
+      type: dremio
+      software_host: "{{ env_var('DREMIO_HOST', 'localhost') }}"
+      port: "{{ env_var('DREMIO_PORT', '9047') | as_number }}"
+      user: "{{ env_var('DREMIO_USER', 'admin') }}"
+      password: "{{ env_var('DREMIO_PASSWORD', 'Maaz123123123@f') }}"
+      object_storage_source: "{{ env_var('DREMIO_OBJECT_STORAGE_SOURCE', 'minio') }}"
+      object_storage_path: "{{ env_var('DREMIO_OBJECT_STORAGE_PATH', 'no_schema') }}"
+      dremio_space: "{{ env_var('DREMIO_SPACE', 'dbt') }}"
+      dremio_space_folder: "{{ env_var('DREMIO_SPACE_FOLDER', 'public') }}"
+      use_ssl: "{{ env_var('DREMIO_USE_SSL', 'false') | as_bool }}"
       threads: 4

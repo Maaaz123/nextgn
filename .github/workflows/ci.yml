@@ -7,33 +7,10 @@ on:
   pull_request:
     branches: [main, develop]
 
-env:
-  WAREHOUSE_HOST: localhost
-  WAREHOUSE_PORT: 5432
-  WAREHOUSE_USER: postgres
-  WAREHOUSE_PASSWORD: postgres
-  WAREHOUSE_DB: warehouse
-  DBT_SCHEMA: public
-
 jobs:
   dbt:
-    name: dbt compile & test
+    name: dbt deps & parse
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: warehouse
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
 
@@ -44,48 +21,15 @@ jobs:
 
       - name: Install dbt
         run: |
-          pip install dbt-core dbt-postgres
-
-      - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
-      - name: Create raw schema and seed table
-        env:
-          PGHOST: localhost
-          PGPORT: 5432
-          PGUSER: postgres
-          PGPASSWORD: postgres
-          PGDATABASE: warehouse
-        run: |
-          psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d warehouse -c "
-            CREATE SCHEMA IF NOT EXISTS raw;
-            CREATE TABLE IF NOT EXISTS raw.example_events (
-              id serial primary key,
-              event_at timestamptz not null default now(),
-              user_id int,
-              event_type text,
-              payload jsonb
-            );
-            INSERT INTO raw.example_events (event_at, user_id, event_type, payload)
-            SELECT now() - (g || ' hours')::interval, (random()*100)::int, 'page_view', '{}'::jsonb
-            FROM generate_series(1, 5) g;
-          "
+          pip install dbt-core dbt-dremio
 
       - name: dbt deps
         working-directory: dbt
         run: dbt deps
 
-      - name: dbt compile
+      - name: dbt parse
         working-directory: dbt
-        run: dbt compile
-
-      - name: dbt run
-        working-directory: dbt
-        run: dbt run
-
-      - name: dbt test
-        working-directory: dbt
-        run: dbt test
+        run: dbt parse
 
   airflow-dags:
     name: Airflow DAGs check
@@ -100,7 +44,7 @@ jobs:
 
       - name: Install Airflow
         run: |
-          pip install "apache-airflow==2.8.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.2/constraints-3.11.txt"
+          pip install "apache-airflow==2.8.2" "apache-airflow-providers-mysql" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.2/constraints-3.11.txt"
 
       - name: Validate DAGs
         env:
@@ -109,7 +53,6 @@ jobs:
         run: |
           mkdir -p airflow_ci/dags
           cp -r airflow/dags/* airflow_ci/dags/
-          airflow dags list-import-errors 2>&1 || true
           python -c "
           from airflow.models import DagBag
           bag = DagBag(dag_folder='airflow_ci/dags', include_examples=False)
@@ -132,7 +75,8 @@ jobs:
           pip install pyyaml --quiet
           python -c "
           import yaml
-          for p in ['dbt/dbt_project.yml', 'dbt/profiles.yml', 'dbt/models/sources.yml', 'dbt/models/schema.yml']:
+          for p in ['dbt/dbt_project.yml', 'dbt/profiles.yml', 'dbt/models/sources.yml',
+                    'dbt/models/bronze/schema.yml', 'dbt/models/silver/schema.yml', 'dbt/models/gold/schema.yml']:
               with open(p) as f:
                   yaml.safe_load(f)
               print(p, 'OK')

@@ -5,6 +5,7 @@ This folder contains **environment-specific** Terraform configs. The same data s
 | Environment | Path | What it does |
 |-------------|------|----------------|
 | **Docker (local/on-prem)** | [environments/docker](environments/docker/) | Creates containers on your machine (same as `docker compose up`) |
+| **Datalake (MinIO buckets)** | [environments/datalake](environments/datalake/) | Creates landing, bronze, silver, gold, logs buckets in MinIO |
 | **AWS** | [environments/aws](environments/aws/) | EC2 + Docker + optional clone & run Compose |
 | **GCP** | [environments/gcp](environments/gcp/) | GCE + Docker + optional clone & run Compose |
 | **Azure** | [environments/azure](environments/azure/) | Linux VM + Docker + optional clone & run Compose |
@@ -14,6 +15,9 @@ This folder contains **environment-specific** Terraform configs. The same data s
 ```bash
 # Local stack with Terraform
 terraform -chdir=terraform/environments/docker init && terraform -chdir=terraform/environments/docker apply
+
+# Datalake buckets (MinIO): landing, bronze, silver, gold, logs
+terraform -chdir=terraform/environments/datalake init && terraform -chdir=terraform/environments/datalake apply -var="minio_endpoint=http://localhost:9000"
 
 # AWS
 terraform -chdir=terraform/environments/aws init && terraform -chdir=terraform/environments/aws apply

@@ -1,0 +1,7 @@
+# Metabase with Dremio driver (metabase-dremio-driver 1.5.0 supports Metabase 0.51.x)
+# IMPORTANT: Do NOT use metabase:latest - driver 1.5.0 is incompatible with 0.52+
+FROM metabase/metabase:v0.51.14
+LABEL metabase.version="0.51.14" dremio.driver="1.5.0"
+
+# Metabase v0.51.x uses MB_PLUGINS_DIR=/plugins
+ADD https://github.com/Baoqi/metabase-dremio-driver/releases/download/1.5.0/dremio.metabase-driver.jar /plugins/

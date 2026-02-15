@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars and adjust
+
+minio_endpoint  = "http://localhost:9000"
+minio_access_key = "minioadmin"
+minio_secret_key = "minioadmin"
+
+# Optional: prefix for bucket names (e.g. "datatools-" → datatools-landing, etc.)
+bucket_prefix = ""

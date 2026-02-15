@@ -1,0 +1,26 @@
+# Silver layer – data warehouse dimensions
+# Naming: dw_dim_*, dw_fact_*
+version: 2
+models:
+  - name: dw_dim_plant_profile
+    description: Plant profile dimension – plants joined with licenses
+    columns:
+      - name: PLANT_ID
+        description: Plant primary key
+        tests: [unique, not_null]
+      - name: LICENSE_ID
+        description: License foreign key
+      - name: PLANT_CREATED_AT
+        description: Plant creation timestamp
+
+  - name: dw_dim_date
+    description: Date dimension for analytics (join on created_date, etc.)
+    columns:
+      - name: date_key
+        description: YYYYMMDD integer
+        tests: [unique, not_null]
+      - name: date_date
+        description: Date value
+        tests: [unique, not_null]
+      - name: year_num
+      - name: month_num

@@ -1,4 +1,4 @@
-# Optional MySQL container for mysql_to_postgres DAG. Enable with enable_mysql = true.
+# Optional MySQL container for mysql_to_landing DAG. Enable with enable_mysql = true.
 
 resource "docker_image" "mysql" {
   count = var.enable_mysql ? 1 : 0

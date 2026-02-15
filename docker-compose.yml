@@ -1,24 +1,47 @@
-# Data stack: PostgreSQL (warehouse + Airflow + Metabase metadata), Airflow, dbt, Metabase
+# Data stack: MinIO + Apache Iceberg + Dremio + Airflow (no Postgres)
+# Warehouse = MinIO + Dremio + Iceberg. Airflow metadata = SQLite. Metabase = H2.
 # Usage: docker compose up -d
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: data_tools_postgres
+  minio:
+    image: minio/minio:latest
+    container_name: data_tools_minio
+    command: server /data --console-address ":9001"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_MULTIPLE_DATABASES: warehouse,airflow,metabase
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/infra/init-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh
+      - minio_data:/data
     ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - data_tools_network
+
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile.dbt
+    image: data-tools-dbt
+    container_name: data_tools_dbt
+    volumes:
+      - ./dbt:/dbt
+    networks:
+      - data_tools_network
+
+  dremio:
+    image: dremio/dremio-oss:latest
+    container_name: data_tools_dremio
+    environment:
+      DREMIO_JAVA_SERVER_EXTRA_OPTS: "-Dpaths.dist=file:///opt/dremio/data -Ddist.path=file:///opt/dremio/data"
+    volumes:
+      - dremio_data:/opt/dremio/data
+    ports:
+      - "9047:9047"
+      - "31010:31010"
+      - "45678:45678"
+    depends_on:
+      - minio
     networks:
       - data_tools_network
 
@@ -28,24 +51,28 @@ services:
       dockerfile: Dockerfile.airflow
     container_name: data_tools_airflow_webserver
     command: webserver
+    volumes:
+      - airflow_metadata:/opt/airflow/metadata
+      - ./dbt:/opt/airflow/dbt
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/airflow
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/metadata/airflow.db
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__FERNET_KEY: ""
       AIRFLOW__CORE__ENABLE_IMPLICIT_ALLOW: "true"
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
       _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_USERNAME:-admin}
       _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_PASSWORD:-admin}
-    volumes:
-      - ./dbt:/opt/airflow/dbt
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
+      DBT_PROJECT_HOST_PATH: ${DBT_PROJECT_HOST_PATH}
     ports:
       - "8080:8080"
     depends_on:
-      postgres:
-        condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
     networks:
@@ -57,19 +84,23 @@ services:
       dockerfile: Dockerfile.airflow
     container_name: data_tools_airflow_scheduler
     command: scheduler
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/airflow
-      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-      AIRFLOW__CORE__FERNET_KEY: ""
-      AIRFLOW__CORE__ENABLE_IMPLICIT_ALLOW: "true"
     volumes:
+      - airflow_metadata:/opt/airflow/metadata
       - ./dbt:/opt/airflow/dbt
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/metadata/airflow.db
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__ENABLE_IMPLICIT_ALLOW: "true"
+      DBT_PROJECT_HOST_PATH: ${DBT_PROJECT_HOST_PATH}
     depends_on:
-      postgres:
-        condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
     networks:
@@ -80,26 +111,26 @@ services:
       context: .
       dockerfile: Dockerfile.airflow
     container_name: data_tools_airflow_init
+    user: root
     command: >
       bash -c "
-        airflow db init &&
-        airflow users create --username ${AIRFLOW_USERNAME:-admin} --password ${AIRFLOW_PASSWORD:-admin} --firstname Admin --lastname User --role Admin --email admin@localhost || true
+        mkdir -p /opt/airflow/metadata &&
+        chown -R 50000:0 /opt/airflow/metadata &&
+        su airflow -s /bin/bash -c 'airflow db init' &&
+        su airflow -s /bin/bash -c \"airflow users create --username ${AIRFLOW_USERNAME:-admin} --password ${AIRFLOW_PASSWORD:-admin} --firstname Admin --lastname User --role Admin --email admin@localhost || true\"
       "
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/metadata/airflow.db
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__FERNET_KEY: ""
       AIRFLOW__CORE__ENABLE_IMPLICIT_ALLOW: "true"
     volumes:
+      - airflow_metadata:/opt/airflow/metadata
       - ./airflow/logs:/opt/airflow/logs
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - data_tools_network
 
-  # Optional: MySQL source for mysql_to_postgres DAG (comment out if using external MySQL)
   mysql:
     image: mysql:8.0
     container_name: data_tools_mysql
@@ -119,25 +150,28 @@ services:
       - data_tools_network
 
   metabase:
-    image: metabase/metabase:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.metabase
+    image: data-tools-metabase:v0.51-dremio
+    pull_policy: never  # Use only our built image (v0.51.14 + Dremio); never pull metabase:latest
     container_name: data_tools_metabase
     environment:
-      MB_DB_TYPE: postgres
-      MB_DB_DBNAME: metabase
-      MB_DB_PORT: 5432
-      MB_DB_USER: ${POSTGRES_USER:-postgres}
-      MB_DB_PASS: ${POSTGRES_PASSWORD:-postgres}
-      MB_DB_HOST: postgres
+      MB_DB_TYPE: h2
+      MB_DB_FILE: /metabase-data/metabase.db
+      MB_PLUGINS_DIR: /plugins
+    volumes:
+      - metabase_data:/metabase-data
     ports:
       - "3000:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - data_tools_network
 
 volumes:
-  postgres_data:
+  minio_data:
+  dremio_data:
+  airflow_metadata:
+  metabase_data:
 
 networks:
   data_tools_network:

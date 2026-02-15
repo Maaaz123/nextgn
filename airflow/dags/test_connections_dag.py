@@ -1,8 +1,9 @@
 """
-DAG: Test MySQL and Postgres connections (mysql_source, postgres_warehouse).
+DAG: Test MySQL and Dremio connections (mysql_source, dremio).
 
-Run this DAG to verify both connections work before running mysql_to_postgres.
-Create connections in Admin → Connections first (see airflow/CONNECTIONS.md).
+Run this DAG to verify connections before running ingestion or data_pipeline_lakehouse.
+Create mysql_source in Admin → Connections (see airflow/CONNECTIONS.md).
+Dremio is reached at host dremio:9047 by default (no connection required).
 """
 import traceback
 from datetime import datetime
@@ -10,10 +11,10 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.mysql.hooks.mysql import MySqlHook
-from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 MYSQL_CONN_ID = "mysql_source"
-POSTGRES_CONN_ID = "postgres_warehouse"
+DREMIO_HOST = "dremio"
+DREMIO_PORT = 9047
 
 
 def test_mysql(**context):
@@ -36,23 +37,20 @@ def test_mysql(**context):
         raise
 
 
-def test_postgres(**context):
+def test_dremio(**context):
     ti = context["ti"]
-    ti.log.info("Testing connection: %s (create in Admin → Connections if missing)", POSTGRES_CONN_ID)
+    ti.log.info("Testing Dremio at %s:%s", DREMIO_HOST, DREMIO_PORT)
     try:
-        hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
-        conn = hook.get_conn()
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1 AS ok")
-            row = cur.fetchone()
-        conn.close()
-        c = hook.get_connection(POSTGRES_CONN_ID)
-        db = getattr(c, "schema", "") or "(schema field empty)"
-        msg = f"Postgres OK: host={c.host} port={c.port} database={db} result={row}"
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(10)
+        s.connect((DREMIO_HOST, DREMIO_PORT))
+        s.close()
+        msg = f"Dremio OK: {DREMIO_HOST}:{DREMIO_PORT} (reachable)"
         ti.log.info(msg)
         return msg
     except Exception as e:
-        ti.log.error("Postgres connection failed: %s", e)
+        ti.log.error("Dremio connection failed: %s", e)
         ti.log.error(traceback.format_exc())
         raise
 
@@ -60,17 +58,17 @@ def test_postgres(**context):
 with DAG(
     dag_id="test_connections",
     default_args={"owner": "data", "retries": 0},
-    description="Test MySQL and Postgres connections used by mysql_to_postgres",
+    description="Test MySQL and Dremio connections (lakehouse stack)",
     schedule_interval=None,
     start_date=datetime(2025, 1, 1),
     catchup=False,
-    tags=["test", "mysql", "postgres"],
+    tags=["test", "mysql", "dremio"],
 ) as dag:
     PythonOperator(
         task_id="test_mysql",
         python_callable=test_mysql,
     )
     PythonOperator(
-        task_id="test_postgres",
-        python_callable=test_postgres,
+        task_id="test_dremio",
+        python_callable=test_dremio,
     )

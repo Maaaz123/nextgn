@@ -1,32 +1,38 @@
 -- Silver (dw): dimension table – date dimension for analytics (join on created_date, etc.)
+-- Dremio-compatible: no :: casts, no generate_series; uses cross-join number spine
 {{ config(schema="silver", materialized="table") }}
 
-with date_spine as (
-  select generate_series(
-    '{{ var("dim_date_start") }}'::date,
-    '{{ var("dim_date_end") }}'::date,
-    '1 day'::interval
-  )::date as date_date
+WITH digits AS (
+  SELECT 0 AS d UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
+  UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9
 ),
-
-enriched as (
-  select
-    to_char(date_date, 'YYYYMMDD')::int as date_key,
+numbers AS (
+  SELECT (a.d + b.d * 10 + c.d * 100 + d.d * 1000) AS n
+  FROM digits a, digits b, digits c, digits d
+  WHERE (a.d + b.d * 10 + c.d * 100 + d.d * 1000) <= 8000
+),
+date_spine AS (
+  SELECT DATE_ADD(CAST('{{ var("dim_date_start") }}' AS DATE), n) AS date_date
+  FROM numbers
+  WHERE DATE_ADD(CAST('{{ var("dim_date_start") }}' AS DATE), n) <= CAST('{{ var("dim_date_end") }}' AS DATE)
+),
+enriched AS (
+  SELECT
+    CAST(TO_CHAR(date_date, 'yyyyMMdd') AS INTEGER) AS date_key,
     date_date,
-    extract(day from date_date) as day_of_month,
-    extract(dow from date_date) as day_of_week,
-    to_char(date_date, 'Dy') as day_name_short,
-    to_char(date_date, 'Day') as day_name_long,
-    extract(week from date_date) as week_of_year,
-    extract(month from date_date) as month_num,
-    to_char(date_date, 'Mon') as month_name_short,
-    to_char(date_date, 'Month') as month_name_long,
-    extract(quarter from date_date) as quarter,
-    extract(year from date_date) as year,
-    date_date::date = date_trunc('week', date_date)::date as is_week_start,
-    extract(dow from date_date) in (0, 6) as is_weekend,
-    to_char(date_date, 'YYYY-MM') as year_month
-  from date_spine
+    EXTRACT(DAY FROM date_date) AS day_of_month,
+    EXTRACT(DOW FROM date_date) AS day_of_week,
+    TO_CHAR(date_date, 'Dy') AS day_name_short,
+    TO_CHAR(date_date, 'Day') AS day_name_long,
+    EXTRACT(WEEK FROM date_date) AS week_of_year,
+    EXTRACT(MONTH FROM date_date) AS month_num,
+    TO_CHAR(date_date, 'Mon') AS month_name_short,
+    TO_CHAR(date_date, 'Month') AS month_name_long,
+    EXTRACT(QUARTER FROM date_date) AS quarter,
+    EXTRACT(YEAR FROM date_date) AS year_num,
+    (date_date = CAST(DATE_TRUNC('week', date_date) AS DATE)) AS is_week_start,
+    EXTRACT(DOW FROM date_date) IN (0, 6) AS is_weekend,
+    TO_CHAR(date_date, 'yyyy-MM') AS year_month
+  FROM date_spine
 )
-
-select * from enriched order by date_date
+SELECT * FROM enriched ORDER BY date_date

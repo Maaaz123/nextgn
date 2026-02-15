@@ -31,7 +31,7 @@ variable "airflow_password" {
 }
 
 variable "enable_mysql" {
-  description = "Create optional MySQL container for mysql_to_postgres DAG"
+  description = "Create optional MySQL container for mysql_to_landing DAG"
   type        = bool
   default     = false
 }

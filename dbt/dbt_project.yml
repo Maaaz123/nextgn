@@ -1,4 +1,8 @@
-# dbt Core – layers: dl (bronze) → stg (transformations) → dw (data warehouse) → dm (business)
+# dbt Core – layers:
+#   landing: SOURCE only (Parquet in MinIO, no dbt models)
+#   bronze:  stg reads from landing, → Iceberg tables
+#   silver:  dw reads from bronze → Iceberg tables
+#   gold:    dm reads from silver → Iceberg tables
 name: "data_tools"
 version: "1.0.0"
 profile: "data_tools"
@@ -20,15 +24,17 @@ vars:
 
 models:
   data_tools:
-    bronze:    # dl_* – data lake / landing (tables from raw)
+    # Bronze: stg reads from landing source → Iceberg tables (Dremio/MinIO)
+    # +schema per layer → minio.bronze, minio.silver, minio.gold (siblings, not nested)
+    bronze:
       +schema: bronze
-      +materialized: view
-    stg:       # stg_* – transformation views
-      +schema: staging
-      +materialized: view
-    silver:    # dw_fact_* / dw_dim_* – data warehouse (facts & dimensions)
+      +materialized: table
+      +post-hook: []  # Iceberg via dbt-dremio
+    # Silver: data warehouse → Iceberg tables
+    silver:
       +schema: silver
-      +materialized: view
-    gold:      # dm_* – business / data marts
+      +materialized: table
+    # Gold: data marts → Iceberg tables
+    gold:
       +schema: gold
       +materialized: table

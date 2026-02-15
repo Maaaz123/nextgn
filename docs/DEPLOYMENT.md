@@ -1,6 +1,6 @@
 # Deploy the data stack anywhere
 
-One stack (Postgres + Airflow + dbt + Metabase), same Docker Compose. Deploy locally, on-prem, or on **AWS**, **GCP**, or **Azure** with the same commands and config.
+One stack (MinIO + Dremio + Airflow + dbt + Metabase), same Docker Compose. Deploy locally, on-prem, or on **AWS**, **GCP**, or **Azure** with the same commands and config.
 
 ## Quick reference
 

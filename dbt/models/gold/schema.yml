@@ -1,0 +1,20 @@
+# Gold layer – business data marts
+# Naming: dm_*
+version: 2
+models:
+  - name: dm_plant
+    description: Plant mart – total plants by year, month, status, land provider, license status
+    columns:
+      - name: year_num
+        description: Year from plant creation
+      - name: month_num
+        description: Month from plant creation
+      - name: plant_status_ar
+        description: Plant status (Arabic)
+      - name: LAND_PROVIDER_en
+        description: Land provider (English)
+      - name: LICENSE_STATUS
+        description: License status (Active/Expired)
+      - name: total_plant
+        description: Count of plants in the group
+        tests: [not_null]

@@ -1,9 +1,15 @@
 .env
 *.log
+logs/
 airflow/logs/
+dbt/.user.yml
 dbt/target/
 dbt/dbt_packages/
 dbt/logs/
+# Metabase plugins (JARs downloaded at image build; README kept)
+metabase/plugins/*.jar
+metabase/plugins/*.db
+metabase/plugins/*.mv.db
 .idea/
 __pycache__/
 *.pyc
