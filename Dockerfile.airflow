@@ -12,8 +12,14 @@ USER airflow
 RUN pip install --no-cache-dir \
     psycopg2-binary \
     apache-airflow-providers-mysql \
+    apache-airflow-providers-postgres \
+    apache-airflow-providers-microsoft-mssql \
+    "apache-airflow-providers-oracle<4" \
     apache-airflow-providers-docker \
+    apache-airflow-providers-http \
     PyMySQL \
     pandas \
     pyarrow \
-    boto3
+    boto3 \
+    requests \
+    hdbcli

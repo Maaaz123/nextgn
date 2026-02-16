@@ -53,7 +53,7 @@ See **`docs/PROJECT_STRUCTURE.md`** for the full structure. Summary:
 ├── .github/workflows/       # CI (dbt, DAG check, YAML) and CD (deploy)
 ├── airflow/
 │   ├── CONNECTIONS.md       # Connections, troubleshooting
-│   └── dags/                # mysql_to_landing, data_pipeline_lakehouse, test_connections + helpers
+│   └── dags/                # DAGs + helpers; config/*.json for tables/schemas/endpoints (see airflow/CONNECTIONS.md)
 ├── dbt/
 │   ├── dbt_project.yml, profiles.yml, packages.yml
 │   └── models/              # sources, schema, bronze/ stg/ silver/ gold/
@@ -62,11 +62,11 @@ See **`docs/PROJECT_STRUCTURE.md`** for the full structure. Summary:
 ├── scripts/
 │   ├── infra/               # init-dbs.sh (when using docker-compose.postgres.yml)
 │   └── airflow/             # test_dag.sh, test_connections.py
-├── terraform/               # IaC: deploy on Docker, AWS, GCP, or Azure (see docs/DEPLOYMENT.md)
+├── terraform/               # IaC: deploy on Docker, AWS, GCP, Azure, or DigitalOcean (see docs/DEPLOYMENT.md)
 ├── tests/                   # Pytest
 ├── docker-compose.yml       # MinIO, Dremio, Airflow, MySQL, Metabase
-├── docker-compose.dev.yml / .staging.yml / .prod.yml
-├── Dockerfile.airflow
+├── docker-compose.dev.yml / .staging.yml / .prod.yml / .postgres.yml
+├── Dockerfile.airflow / Dockerfile.dbt / Dockerfile.metabase
 └── README.md
 ```
 

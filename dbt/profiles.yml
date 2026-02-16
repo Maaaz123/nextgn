@@ -1,15 +1,14 @@
-# dbt profile – use env vars so Airflow/Docker can inject connection
+# dbt profile – use env vars only (no secrets in file). Set DREMIO_* in .env or Airflow Variables.
 # Lakehouse: MinIO + Apache Iceberg + Dremio
 data_tools:
   target: "dremio_dev"
   outputs:
-    # Raw tables are Iceberg in MinIO, queried via Dremio. Set DBT_TARGET=dremio_dev to use.
     dremio_dev:
       type: dremio
       software_host: "{{ env_var('DREMIO_HOST', 'localhost') }}"
       port: "{{ env_var('DREMIO_PORT', '9047') | as_number }}"
       user: "{{ env_var('DREMIO_USER', 'admin') }}"
-      password: "{{ env_var('DREMIO_PASSWORD', 'Maaz123123123@f') }}"
+      password: "{{ env_var('DREMIO_PASSWORD') }}"  # required – set in env or Airflow Variable dremio_password
       object_storage_source: "{{ env_var('DREMIO_OBJECT_STORAGE_SOURCE', 'minio') }}"
       object_storage_path: "{{ env_var('DREMIO_OBJECT_STORAGE_PATH', 'no_schema') }}"
       dremio_space: "{{ env_var('DREMIO_SPACE', 'dbt') }}"
@@ -21,7 +20,7 @@ data_tools:
       software_host: "{{ env_var('DREMIO_HOST', 'localhost') }}"
       port: "{{ env_var('DREMIO_PORT', '9047') | as_number }}"
       user: "{{ env_var('DREMIO_USER', 'admin') }}"
-      password: "{{ env_var('DREMIO_PASSWORD', 'Maaz123123123@f') }}"
+      password: "{{ env_var('DREMIO_PASSWORD') }}"  # required – no default
       object_storage_source: "{{ env_var('DREMIO_OBJECT_STORAGE_SOURCE', 'minio') }}"
       object_storage_path: "{{ env_var('DREMIO_OBJECT_STORAGE_PATH', 'no_schema') }}"
       dremio_space: "{{ env_var('DREMIO_SPACE', 'dbt') }}"

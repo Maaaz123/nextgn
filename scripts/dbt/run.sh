@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run dbt commands via the Airflow container (Dremio target).
 # Usage: ./scripts/dbt/run.sh [dbt command...]   e.g.  ./scripts/dbt/run.sh run | test
-# Requires: Docker Compose stack up (docker compose up -d).
+# Requires: Docker Compose stack up (docker compose up -d). Set DREMIO_PASSWORD in env or .env (no default; see airflow/CONNECTIONS.md).
 
 set -e
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -11,7 +11,7 @@ ENV_ARGS=(
   -e DREMIO_HOST=dremio
   -e DREMIO_PORT=9047
   -e DREMIO_USER=admin
-  -e DREMIO_PASSWORD="${DREMIO_PASSWORD:-Maaz123123123@f}"
+  -e DREMIO_PASSWORD="${DREMIO_PASSWORD}"
   -e DREMIO_OBJECT_STORAGE_SOURCE=minio
   -e DREMIO_OBJECT_STORAGE_PATH=no_schema
 )

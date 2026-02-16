@@ -1,0 +1,8 @@
+[
+  {
+    "conn_id": "sqlserver_source",
+    "schema": "dbo",
+    "table": "example_table",
+    "primary_key": "id"
+  }
+]

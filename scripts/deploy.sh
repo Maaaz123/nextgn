@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Deploy the data stack: local (Docker Compose or Terraform Docker), AWS, GCP, or Azure.
+# Deploy the data stack: local (Docker Compose or Terraform Docker), AWS, GCP, Azure, or DigitalOcean.
 # Usage: ./scripts/deploy.sh <target>
-#   target: docker | terraform | datalake | aws | gcp | azure
+#   target: docker | terraform | datalake | aws | gcp | azure | digitalocean
 # Run from project root. For cloud targets, set variables (e.g. terraform.tfvars) first.
 
 set -e
@@ -39,6 +39,12 @@ case "$TARGET" in
     terraform -chdir=terraform/environments/azure apply -input=false
     terraform -chdir=terraform/environments/azure output
     ;;
+  digitalocean)
+    echo "=== Deploying to DigitalOcean (Terraform) ==="
+    terraform -chdir=terraform/environments/digitalocean init -input=false
+    terraform -chdir=terraform/environments/digitalocean apply -input=false
+    terraform -chdir=terraform/environments/digitalocean output
+    ;;
   datalake)
     echo "=== Creating datalake buckets (MinIO) ==="
     echo "Prerequisites: docker compose up -d minio"
@@ -51,13 +57,14 @@ case "$TARGET" in
     ;;
   *)
     echo "Usage: $0 <target>"
-    echo "  target: docker | terraform | datalake | aws | gcp | azure"
-    echo "  docker    - docker compose up -d"
-    echo "  terraform - Terraform Docker (local)"
-    echo "  datalake  - Create landing, bronze, silver, gold, logs buckets in MinIO"
-    echo "  aws       - Terraform → EC2 + Docker"
-    echo "  gcp       - Terraform → GCE + Docker"
-    echo "  azure     - Terraform → Azure VM + Docker"
+    echo "  target: docker | terraform | datalake | aws | gcp | azure | digitalocean"
+    echo "  docker       - docker compose up -d"
+    echo "  terraform    - Terraform Docker (local)"
+    echo "  datalake     - Create landing, bronze, silver, gold, logs buckets in MinIO"
+    echo "  aws          - Terraform → EC2 + Docker"
+    echo "  gcp          - Terraform → GCE + Docker"
+    echo "  azure        - Terraform → Azure VM + Docker"
+    echo "  digitalocean - Terraform → Droplet + Docker"
     echo "See docs/DEPLOYMENT.md for variables and details."
     exit 1
     ;;

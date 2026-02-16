@@ -1,6 +1,6 @@
 # Terraform – deploy on any infra
 
-This folder contains **environment-specific** Terraform configs. The same data stack (Postgres + Airflow + dbt + Metabase) runs via **Docker Compose** everywhere; Terraform either runs that stack locally (Docker provider) or provisions a **VM on a cloud** and runs Compose there.
+This folder contains **environment-specific** Terraform configs. The same data stack (MinIO + Dremio + Airflow + dbt + Metabase) runs via **Docker Compose** everywhere; Terraform either runs that stack locally (Docker provider) or provisions a **VM on a cloud** and runs Compose there.
 
 | Environment | Path | What it does |
 |-------------|------|----------------|
@@ -9,6 +9,7 @@ This folder contains **environment-specific** Terraform configs. The same data s
 | **AWS** | [environments/aws](environments/aws/) | EC2 + Docker + optional clone & run Compose |
 | **GCP** | [environments/gcp](environments/gcp/) | GCE + Docker + optional clone & run Compose |
 | **Azure** | [environments/azure](environments/azure/) | Linux VM + Docker + optional clone & run Compose |
+| **DigitalOcean** | [environments/digitalocean](environments/digitalocean/) | Droplet + Docker + optional clone & run Compose |
 
 **Run from the repo root**, for example:
 
@@ -27,8 +28,11 @@ terraform -chdir=terraform/environments/gcp init && terraform -chdir=terraform/e
 
 # Azure (set subscription_id)
 terraform -chdir=terraform/environments/azure init && terraform -chdir=terraform/environments/azure apply
+
+# DigitalOcean (set DIGITALOCEAN_TOKEN or do_token in tfvars)
+terraform -chdir=terraform/environments/digitalocean init && terraform -chdir=terraform/environments/digitalocean apply
 ```
 
-Or use the deploy script from repo root: **`./scripts/deploy.sh <docker|terraform|aws|gcp|azure>`**.
+Or use the deploy script from repo root: **`./scripts/deploy.sh <docker|terraform|datalake|aws|gcp|azure|digitalocean>`**.
 
 Full deployment guide: **[docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md)**.

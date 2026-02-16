@@ -1,9 +1,10 @@
 # Silver layer – data warehouse dimensions
-# Naming: dw_dim_*, dw_fact_*
+# Naming: dw_dim_*, dw_fact_*  |  Tags: domain per model (multi-domain where relevant)
 version: 2
 models:
   - name: dw_dim_plant_profile
     description: Plant profile dimension – plants joined with licenses
+    tags: [domain_plants, domain_licenses]
     columns:
       - name: PLANT_ID
         description: Plant primary key
@@ -15,6 +16,7 @@ models:
 
   - name: dw_dim_date
     description: Date dimension for analytics (join on created_date, etc.)
+    tags: [domain_shared]
     columns:
       - name: date_key
         description: YYYYMMDD integer

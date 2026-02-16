@@ -1,9 +1,10 @@
 # Bronze layer – staging models (landing Parquet → Iceberg)
-# Naming: stg_*
+# Naming: stg_*  |  Tags: layer + domain per model
 version: 2
 models:
   - name: stg_plants
     description: Bronze – plants from landing Parquet, deduped by updated_at
+    tags: [domain_plants]
     columns:
       - name: PLANT_ID
         description: Plant primary key
@@ -15,6 +16,7 @@ models:
 
   - name: stg_licenses
     description: Bronze – licenses from landing Parquet, deduped by updated_at
+    tags: [domain_licenses]
     columns:
       - name: LICENSE_ID
         description: License primary key

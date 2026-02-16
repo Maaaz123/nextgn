@@ -1,20 +1,37 @@
 """
-DAG: Test MySQL and Dremio connections (mysql_source, dremio).
+DAG: Test MySQL and Dremio connections.
 
-Run this DAG to verify connections before running ingestion or data_pipeline_lakehouse.
-Create mysql_source in Admin → Connections (see airflow/CONNECTIONS.md).
-Dremio is reached at host dremio:9047 by default (no connection required).
+Parameterized via Airflow Variables: environment, mysql_conn_id, dremio_host, dremio_port.
 """
 import traceback
 from datetime import datetime
+import os
 
 from airflow import DAG
+from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from airflow.providers.mysql.hooks.mysql import MySqlHook
 
-MYSQL_CONN_ID = "mysql_source"
-DREMIO_HOST = "dremio"
-DREMIO_PORT = 9047
+
+def _env():
+    return Variable.get("environment", default_var=os.environ.get("AIRFLOW_ENV", "dev"))
+
+
+def _mysql_conn_id():
+    return Variable.get("mysql_conn_id", default_var="mysql_source")
+
+
+def _dremio_host():
+    return Variable.get("dremio_host", default_var=os.environ.get("DREMIO_HOST", "dremio"))
+
+
+def _dremio_port():
+    return int(Variable.get("dremio_port", default_var=os.environ.get("DREMIO_PORT", "9047")))
+
+
+MYSQL_CONN_ID = _mysql_conn_id()
+DREMIO_HOST = _dremio_host()
+DREMIO_PORT = _dremio_port()
 
 
 def test_mysql(**context):
@@ -55,14 +72,17 @@ def test_dremio(**context):
         raise
 
 
+# Tags: environment + layer + domain (connectivity/infra)
+_DAG_TAGS = [f"env:{_env()}", "layer:test", "model:connectivity", "domain:connectivity", "test", "mysql", "dremio"]
+
 with DAG(
     dag_id="test_connections",
     default_args={"owner": "data", "retries": 0},
     description="Test MySQL and Dremio connections (lakehouse stack)",
-    schedule_interval=None,
+    schedule=None,
     start_date=datetime(2025, 1, 1),
     catchup=False,
-    tags=["test", "mysql", "dremio"],
+    tags=_DAG_TAGS,
 ) as dag:
     PythonOperator(
         task_id="test_mysql",

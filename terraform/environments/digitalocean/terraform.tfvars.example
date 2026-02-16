@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars. Do not commit if it contains secrets.
+# Set DIGITALOCEAN_TOKEN env var or set do_token below.
+
+# do_token       = "your-do-api-token"
+region         = "nyc1"
+project_name  = "data-tools"
+droplet_size  = "s-2vcpu-4gb"
+
+repo_url    = "https://github.com/yourorg/your-repo.git"
+repo_branch = "main"
+
+ssh_public_key_path = "~/.ssh/id_rsa.pub"
+allowed_cidr        = ["0.0.0.0/0"]
+
+# postgres_password = "postgres"
+# airflow_password  = "admin"

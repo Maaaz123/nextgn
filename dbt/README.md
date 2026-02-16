@@ -31,8 +31,26 @@ dbt run -s dm_plant
 dbt test
 ```
 
+## Tags (layer + domain)
+
+Models are tagged by **layer** (in `dbt_project.yml`) and **domain** (in each model’s `schema.yml`):
+
+| Tag | Use |
+|-----|-----|
+| `bronze`, `silver`, `gold` | Layer (folder-level) |
+| `domain_plants`, `domain_licenses` | Business domain |
+| `domain_shared` | Shared dimensions (e.g. dw_dim_date) |
+
+Examples:
+
+```bash
+dbt run --select tag:bronze
+dbt run --select tag:domain_plants
+dbt run --select tag:domain_licenses,tag:domain_plants
+```
+
 ## Config
 
 - **Profiles**: `profiles.yml` (uses env vars for credentials)
 - **Target**: `dremio_dev` (default)
-- **Vars**: `dim_date_start`, `dim_date_end` in `dbt_project.yml`
+- **Vars**: `dim_date_start`, `dim_date_end`, `environment` in `dbt_project.yml`

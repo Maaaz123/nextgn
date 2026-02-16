@@ -1,6 +1,6 @@
 # Deploy the data stack anywhere
 
-One stack (MinIO + Dremio + Airflow + dbt + Metabase), same Docker Compose. Deploy locally, on-prem, or on **AWS**, **GCP**, or **Azure** with the same commands and config.
+One stack (MinIO + Dremio + Airflow + dbt + Metabase), same Docker Compose. Deploy locally, on-prem, or on **AWS**, **GCP**, **Azure**, or **DigitalOcean** with the same commands and config.
 
 ## Quick reference
 
@@ -11,6 +11,7 @@ One stack (MinIO + Dremio + Airflow + dbt + Metabase), same Docker Compose. Depl
 | **AWS** | Terraform → EC2 + Docker | `terraform -chdir=terraform/environments/aws init && terraform -chdir=terraform/environments/aws apply` |
 | **GCP** | Terraform → GCE + Docker | `terraform -chdir=terraform/environments/gcp init && terraform -chdir=terraform/environments/gcp apply` |
 | **Azure** | Terraform → Linux VM + Docker | `terraform -chdir=terraform/environments/azure init && terraform -chdir=terraform/environments/azure apply` |
+| **DigitalOcean** | Terraform → Droplet + Docker | `terraform -chdir=terraform/environments/digitalocean init && terraform -chdir=terraform/environments/digitalocean apply` |
 
 All cloud options use the **same** `docker-compose.yml`: Terraform creates a VM, installs Docker and Compose, then clones your repo and runs `docker compose up -d`. So you only maintain one stack definition.
 
@@ -116,16 +117,43 @@ Same stack as Compose, managed by Terraform (state, variables). See `terraform/e
 
 ---
 
+## 6. DigitalOcean
+
+**Prerequisites:** DigitalOcean API token, Terraform, SSH key.
+
+1. Set token and (optional) tfvars:
+   ```bash
+   export DIGITALOCEAN_TOKEN=your-api-token
+   # Or: cp terraform/environments/digitalocean/terraform.tfvars.example terraform/environments/digitalocean/terraform.tfvars
+   ```
+
+2. Apply:
+   ```bash
+   terraform -chdir=terraform/environments/digitalocean init
+   terraform -chdir=terraform/environments/digitalocean apply
+   ```
+
+3. Use outputs for Airflow, Metabase, Dremio URLs. If `repo_url` is set (public repo), the Droplet runs cloud-init and starts the stack; wait 2–3 minutes. If the repo is **private**, SSH in and run:
+   ```bash
+   ssh root@<public_ip>
+   git clone <your-repo> /opt/app && cd /opt/app && cp .env.example .env && docker compose up -d
+   ```
+
+**Variables:** `do_token` or `DIGITALOCEAN_TOKEN`, `region`, `droplet_size`, `repo_url`, `repo_branch`, `ssh_public_key_path`, `allowed_cidr`. See `terraform/environments/digitalocean/README.md`.
+
+---
+
 ## Deploy script (optional)
 
 From repo root:
 
 ```bash
-./scripts/deploy.sh docker    # same as: docker compose up -d
-./scripts/deploy.sh terraform # Terraform Docker env
-./scripts/deploy.sh aws       # Terraform AWS
-./scripts/deploy.sh gcp       # Terraform GCP
-./scripts/deploy.sh azure     # Terraform Azure
+./scripts/deploy.sh docker        # same as: docker compose up -d
+./scripts/deploy.sh terraform     # Terraform Docker env
+./scripts/deploy.sh aws           # Terraform AWS
+./scripts/deploy.sh gcp           # Terraform GCP
+./scripts/deploy.sh azure         # Terraform Azure
+./scripts/deploy.sh digitalocean  # Terraform DigitalOcean Droplet
 ```
 
 The script only runs the right Terraform or Compose; set variables (e.g. tfvars or env) yourself before running.

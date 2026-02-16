@@ -1,0 +1,8 @@
+[
+  {
+    "conn_id": "sap_hana_source",
+    "schema": "MYSCHEMA",
+    "table": "EXAMPLE_TABLE",
+    "primary_key": "id"
+  }
+]

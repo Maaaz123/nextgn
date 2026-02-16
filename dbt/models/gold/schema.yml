@@ -1,9 +1,10 @@
 # Gold layer – business data marts
-# Naming: dm_*
+# Naming: dm_*  |  Tags: domain per mart
 version: 2
 models:
   - name: dm_plant
     description: Plant mart – total plants by year, month, status, land provider, license status
+    tags: [domain_plants, domain_licenses]
     columns:
       - name: year_num
         description: Year from plant creation

@@ -1,0 +1,50 @@
+[
+  {
+    "conn_id": "mysql_source",
+    "mysql_schema": "mimdbuat01",
+    "mysql_table": "plants",
+    "primary_key": "id"
+  },
+  {
+    "conn_id": "mysql_source",
+    "mysql_schema": "mimdbuat01",
+    "mysql_table": "licenses",
+    "primary_key": "id"
+  },
+  {
+    "conn_id": "mysql_source",
+    "mysql_schema": "mimdbuat01",
+    "mysql_table": "products",
+    "primary_key": "id"
+  },
+  {
+    "conn_id": "mysql_source",
+    "mysql_schema": "mimdbuat01",
+    "mysql_table": "activities",
+    "primary_key": "id"
+  },
+  {
+    "conn_id": "mysql_source",
+    "mysql_schema": "mimdbuat01",
+    "mysql_table": "commercial_entities",
+    "primary_key": "id"
+  },
+  {
+    "conn_id": "mysql_source",
+    "mysql_schema": "mimdbuat01",
+    "mysql_table": "commercial_entity_activity",
+    "primary_key": "commercial_entity_id"
+  },
+  {
+    "conn_id": "mysql_source",
+    "mysql_schema": "mimdbuat01",
+    "mysql_table": "commercial_entity_owners",
+    "primary_key": "id"
+  },
+  {
+    "conn_id": "mysql_source",
+    "mysql_schema": "mimdbuat01",
+    "mysql_table": "plant_products",
+    "primary_key": "id"
+  }
+]

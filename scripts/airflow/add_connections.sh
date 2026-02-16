@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Add Airflow connections for mysql_source and postgres_warehouse.
+# Add Airflow connections for mysql_source and postgres_warehouse (local dev).
 # Run from project root. Requires: docker compose up, MYSQL_PASSWORD in env or .env.
+# PRODUCTION: Do not store real credentials in .env. Create connections in Airflow
+# Admin → Connections (set Login/Password in UI) or use a secrets backend. See airflow/CONNECTIONS.md.
 set -e
 
 cd "$(dirname "$0")/../.."

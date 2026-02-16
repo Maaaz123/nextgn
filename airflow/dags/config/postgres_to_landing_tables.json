@@ -1,0 +1,8 @@
+[
+  {
+    "conn_id": "postgres_source",
+    "schema": "public",
+    "table": "example_table",
+    "primary_key": "id"
+  }
+]

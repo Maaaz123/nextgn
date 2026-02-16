@@ -1,0 +1,8 @@
+[
+  {
+    "url": "https://api.example.com/data",
+    "key": "api/example/data",
+    "method": "GET",
+    "output_format": "parquet"
+  }
+]
